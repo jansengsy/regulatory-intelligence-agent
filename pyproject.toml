@@ -1,10 +1,14 @@
 [project]
-name = "simple-pydantic-agent"
+name = "regsense"
 version = "0.1.0"
-description = "A simple Pydantic AI agent demonstrating fundamentals"
+description = "Regulatory Intelligence & Impact Platform"
 requires-python = ">=3.10"
 dependencies = [
     "pydantic-ai-slim[openai]>=0.0.14",
     "python-dotenv>=1.0.0",
     "langfuse>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "sqlmodel>=0.0.22",
 ]
