@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model: str = "arcee-ai/trinity-large-preview:free"
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
-    langfuse_base_url: str = "https://us.cloud.langfuse.com"
+    langfuse_base_url: str = "https://cloud.langfuse.com"
     database_url: str = "sqlite:///./regsense.db"
     app_title: str = "RegSense"
     log_level: str = "INFO"
