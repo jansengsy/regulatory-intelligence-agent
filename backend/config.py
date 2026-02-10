@@ -11,8 +11,6 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_base_url: str = "https://us.cloud.langfuse.com"
     database_url: str = "sqlite:///./regsense.db"
-    gfsc_feed_url: str = "https://www.gfsc.gg/news/rss.xml"
-    fca_feed_url: str = "https://www.fca.org.uk/news/rss.xml"
     app_title: str = "RegSense"
     log_level: str = "INFO"
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
