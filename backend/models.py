@@ -31,7 +31,7 @@ class Alert(SQLModel, table=True):
     key_entities: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
     # Metadata
-    analyzed: bool = Field(default=False, index=True)
+    analysed: bool = Field(default=False, index=True)
     created_at: datetime = Field(default_factory=_utcnow)
 
 
@@ -62,5 +62,5 @@ class Document(SQLModel, table=True):
     compliance_flags: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
     # Metadata
-    analyzed: bool = Field(default=False)
+    analysed: bool = Field(default=False)
     uploaded_at: datetime = Field(default_factory=_utcnow)

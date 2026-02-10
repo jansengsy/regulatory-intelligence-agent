@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     """Application settings, loaded from environment variables."""
 
     openrouter_api_key: str = ""
-    model: str = "arcee-ai/trinity-large-preview:free"
+    model: str = "anthropic/claude-haiku-4.5"
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
     langfuse_base_url: str = "https://cloud.langfuse.com"
