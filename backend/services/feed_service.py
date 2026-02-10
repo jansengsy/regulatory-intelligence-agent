@@ -182,7 +182,7 @@ def fetch_and_store(
             result.errors.append(msg)
             continue
 
-        # feedparser doesn't raise on HTTP errors — check bozo flag 
+        # feedparser doesn't raise on HTTP errors: check bozo flag 
         if parsed.bozo and not parsed.entries:
             msg = f"Feed error for {feed_source.name}: {parsed.bozo_exception}"
             logger.warning(msg)
@@ -206,7 +206,7 @@ def fetch_and_store(
 
     session.commit()
     logger.info(
-        "Ingestion complete — %d new alerts, %d duplicates skipped, %d errors",
+        "Ingestion complete: %d new alerts, %d duplicates skipped, %d errors",
         result.new_alerts,
         result.duplicates_skipped,
         len(result.errors),

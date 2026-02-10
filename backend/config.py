@@ -17,5 +17,5 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Cached settings instance — reads .env once, reuses everywhere."""
+    """Cached settings instance: reads .env once, reuses everywhere"""
     return Settings()
