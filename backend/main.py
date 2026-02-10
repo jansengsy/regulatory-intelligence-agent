@@ -1,14 +1,26 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import get_settings
+from backend.database import create_db_and_tables
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs on startup and shutdown"""
+    create_db_and_tables()
+    yield
+
 
 app = FastAPI(
     title=settings.app_title,
     description="Regulatory Intelligence & Impact Platform",
     version="0.0.1",
+    lifespan=lifespan,
 )
 
 # Dev CORS policy
