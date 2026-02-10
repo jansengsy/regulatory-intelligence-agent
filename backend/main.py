@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import get_settings
 from backend.database import create_db_and_tables
+from backend.models import Alert, Document, PortfolioHolding  # noqa: F401 — linting suppression as models not being used yet
 
 settings = get_settings()
 
