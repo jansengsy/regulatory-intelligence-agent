@@ -28,7 +28,7 @@ def trigger_fetch(session: Session = Depends(get_session)):
 # POST /api/alerts/analyse - run LLM classification on pending alerts
 @router.post("/analyse")
 async def trigger_analyse(
-    limit: int = Query(10, ge=1, le=50, description="Max alerts to analyse in this batch"),
+    limit: int = Query(10, ge=1, le=200, description="Max alerts to analyse in this batch"),
     session: Session = Depends(get_session),
 ):
     """Classify unanalysed alerts via the LLM agent (up to the limit)"""
