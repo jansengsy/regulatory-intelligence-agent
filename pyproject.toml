@@ -1,5 +1,5 @@
 [project]
-name = "Regulatory Intelligence"
+name = "regsense"
 version = "0.1.0"
 description = "Regulatory Intelligence & Impact Platform"
 requires-python = ">=3.10"
