@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import get_settings
 from backend.database import create_db_and_tables
-from backend.models import Alert, Document, PortfolioHolding 
 from backend.routers import alerts
 
 settings = get_settings()
@@ -20,7 +19,6 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Runs on startup and shutdown"""
     create_db_and_tables()
     yield
 

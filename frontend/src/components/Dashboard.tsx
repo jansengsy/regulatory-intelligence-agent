@@ -27,8 +27,6 @@ export function Dashboard() {
   const [fetching, setFetching] = useState(false);
   const [analysing, setAnalysing] = useState(false);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
-
-  // Toast state: visible controls DOM presence, exiting triggers slide-out
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastExiting, setToastExiting] = useState(false);
@@ -41,7 +39,6 @@ export function Dashboard() {
     setToastMsg(msg);
     setToastVisible(true);
 
-    // Start exit after 3.5s, then remove from DOM after animation
     toastTimer.current = setTimeout(() => {
       setToastExiting(true);
       setTimeout(() => {
@@ -118,25 +115,21 @@ export function Dashboard() {
     }
   };
 
-  // Sort alerts client-side
   const sortedAlerts = useMemo(() => {
     const sorted = [...alerts];
     sorted.sort((a, b) => {
       switch (sortKey) {
         case "published_date": {
-          // Newest first - parse the RSS date strings
           const da = new Date(a.published_date || 0).getTime();
           const db = new Date(b.published_date || 0).getTime();
           return db - da;
         }
         case "severity": {
-          // Critical first, then High, Medium, Low, unclassified last
           const sa = SEVERITY_ORDER[a.severity] ?? 4;
           const sb = SEVERITY_ORDER[b.severity] ?? 4;
           return sa - sb;
         }
         case "effective_date": {
-          // Alerts with effective dates first, then by date
           if (!a.effective_date && !b.effective_date) return 0;
           if (!a.effective_date) return 1;
           if (!b.effective_date) return -1;

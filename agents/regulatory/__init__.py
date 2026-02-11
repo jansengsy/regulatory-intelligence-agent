@@ -1,5 +1,3 @@
-"""Regulatory classification agent - analyses GFSC alerts using an LLM"""
-
 from agents.regulatory.agent import (
     AlertClassification,
     analyse_alert,

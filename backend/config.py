@@ -3,8 +3,6 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    """Application settings, loaded from environment variables."""
-
     openrouter_api_key: str = ""
     model: str = "anthropic/claude-haiku-4.5"
     langfuse_public_key: str = ""
@@ -17,5 +15,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Cached settings instance: reads .env once, reuses everywhere"""
     return Settings()

@@ -84,7 +84,7 @@ Click the `Local:` link to view the application.
 │   ├── config.py                        # Pydantic settings (env vars + defaults)
 │   ├── database.py                      # SQLite/SQLModel setup
 │   ├── main.py                          # Backend entry point
-│   ├── models.py                        # DB Schemas (only alert used, others are for future improvements)
+│   ├── models.py                        # DB Schemas
 │   ├── routers
 │   │   └── alerts.py                    # /api/alerts endpoints (used by frontend)
 │   └── services

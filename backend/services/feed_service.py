@@ -1,5 +1,3 @@
-"""RSS feed ingestion for GFSC regulatory announcements."""
-
 from __future__ import annotations
 
 import logging
@@ -18,8 +16,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class FeedSource:
-    """A single RSS feed with metadata about its origin."""
-
     name: str 
     url: str
     category: str
@@ -98,19 +94,13 @@ GFSC_FEEDS: list[FeedSource] = [
     ),
 ]
 
-# Default subset for ingestion:the "All News" feed captures everything
-# Also pull the specialist feeds so we can tag feed_category
-# Removing duplicate links means overlapping entries are handled automatically
 DEFAULT_FEEDS: list[FeedSource] = GFSC_FEEDS
 
 # SSL context using certifi
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
-# Ingestion result summary
 @dataclass
 class IngestResult:
-    """Summary of a feed ingestion run."""
-
     feeds_fetched: int = 0
     entries_found: int = 0
     new_alerts: int = 0
@@ -118,19 +108,9 @@ class IngestResult:
     errors: list[str] = field(default_factory=list)
 
 
-# Parse a single feedparser entry into an Alert row
 def _parse_entry(entry: feedparser.FeedParserDict, source: FeedSource) -> Alert:
-    """Convert a single feedparser entry into an Alert row.
-
-    Only the source-data fields are populated here.
-    LLM classification fields remain empty until the agent processes them.
-    """
-
-    # feedparser normalises the published date into a struct_time
     published = entry.get("published", "")
 
-
-    # Content: prefer <content:encoded>, fall back to <description>
     raw_content = ""
     if entry.get("content"):
         raw_content = entry.content[0].get("value", "")
@@ -147,24 +127,14 @@ def _parse_entry(entry: feedparser.FeedParserDict, source: FeedSource) -> Alert:
     )
 
 
-# Fetch and store RSS feeds
 def fetch_and_store(
     session: Session,
     feeds: list[FeedSource] | None = None,
 ) -> IngestResult:
-    """Fetch RSS feeds, parse entries, and store new alerts.
-
-    Args:
-        session: An active SQLModel database session.
-        feeds: Which feeds to ingest. Defaults to DEFAULT_FEEDS.
-
-    Returns:
-        An IngestResult summarising what happened.
-    """
     feeds = feeds or DEFAULT_FEEDS
     result = IngestResult()
 
-    # Pre-load existing links so we can deduplicate in memory rather than hitting the DB per entry.
+    # TODO: Make this scalable
     existing_links: set[str] = set(
         session.exec(select(Alert.link)).all()
     )

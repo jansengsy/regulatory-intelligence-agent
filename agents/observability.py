@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 def setup_observability() -> bool:
-    """Initialise LangFuse observability for Pydantic AI agents"""
-    
     langfuse = get_client()
 
     if langfuse.auth_check():

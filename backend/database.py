@@ -15,11 +15,9 @@ engine = create_engine(
 
 
 def create_db_and_tables():
-    """Create all tables defined by SQLModel subclasses with table=True."""
     SQLModel.metadata.create_all(engine)
 
 
 def get_session() -> Generator[Session, None, None]:
-    """Yield a database session for a single request"""
     with Session(engine) as session:
         yield session

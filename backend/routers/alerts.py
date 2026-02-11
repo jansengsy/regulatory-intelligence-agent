@@ -1,5 +1,3 @@
-"""API routes for regulatory alerts: ingestion, listing, stats, and detail"""
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, col, func, select
 
@@ -14,7 +12,6 @@ router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 # POST /api/alerts/fetch - trigger RSS feed ingestion
 @router.post("/fetch")
 def trigger_fetch(session: Session = Depends(get_session)):
-    """Fetch all configured GFSC RSS feeds, store new alerts, skip duplicates"""
     result = fetch_and_store(session)
     return {
         "feeds_fetched": result.feeds_fetched,
@@ -31,7 +28,6 @@ async def trigger_analyse(
     limit: int = Query(10, ge=1, le=200, description="Max alerts to analyse in this batch"),
     session: Session = Depends(get_session),
 ):
-    """Classify unanalysed alerts via the LLM agent (up to the limit)"""
     analysed_ids = await analyse_pending_alerts(session, limit=limit)
     return {
         "analysed_count": len(analysed_ids),
@@ -50,7 +46,6 @@ def list_alerts(
     offset: int = Query(0, ge=0, description="Number of results to skip"),
     session: Session = Depends(get_session),
 ):
-    """List alerts, newest first.  All filters are optional and combinable"""
     query = select(Alert)
 
     if feed_category is not None:
@@ -71,7 +66,6 @@ def list_alerts(
 # GET /api/alerts/stats - dashboard summary statistics
 @router.get("/stats")
 def alert_stats(session: Session = Depends(get_session)):
-    """Aggregate counts for the dashboard: totals, by category, severity, etc"""
     total = session.exec(select(func.count(Alert.id))).one()
     analysed_count = session.exec(
         select(func.count(Alert.id)).where(Alert.analysed == True)
@@ -120,7 +114,6 @@ def alert_stats(session: Session = Depends(get_session)):
 # GET /api/alerts/{alert_id} - single alert detail
 @router.get("/{alert_id}")
 def get_alert(alert_id: int, session: Session = Depends(get_session)):
-    """Return a single alert by ID, or 404."""
     alert = session.get(Alert, alert_id)
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")

@@ -1,5 +1,3 @@
-"""Regulatory classification agent - analyses raw alerts using an LLM"""
-
 from __future__ import annotations
 
 import asyncio
@@ -22,8 +20,6 @@ settings = get_settings()
 
 # Structured output schema (what the LLM must return for every alert)
 class AlertClassification(BaseModel):
-    """Structured classification of a regulatory announcement"""
-
     summary: str = Field(
         description="Plain-English summary of the regulatory change in 2-3 sentences. "
         "Written for a compliance professional, not a lawyer."
@@ -85,8 +81,6 @@ regulatory_agent = Agent(
 
 # Analysis service - processes unanalysed alerts
 async def analyse_alert(alert: Alert) -> AlertClassification:
-    """Run the LLM agent on a single alert and return the classification"""
-
     user_prompt = (
         f"Title: {alert.title}\n"
         f"Source: {alert.source}\n"
@@ -102,8 +96,6 @@ async def analyse_pending_alerts(
     session: Session,
     limit: int = 10,
 ) -> list[int]:
-    """Find unanalysed alerts, classify them via the LLM, and update the DB"""
-
     pending = session.exec(
         select(Alert)
         .where(Alert.analysed == False)
