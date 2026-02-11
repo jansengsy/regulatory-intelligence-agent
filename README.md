@@ -24,23 +24,20 @@ Compliance and regulation within financial services is something teams need to s
 
 I chose to start with the GFSC because it's the local regulator and already had an RSS feed available.
 
-## The three main steps:
-
-1. **Ingest** regulatory updates from 13 GFSC RSS feeds, skipping duplicates or already fetched updates, and storing those in the db
-2. **Classify** each alert using an LLM agent assigning the fields listed above and providing insight
-3. **Displays** alerts in a filterable, sortable dashboard with full detail views
-
-Currently, the ingestion and analysis steps are manual. This could be easily improved through automation. We could setup a cron job on the server to schedule automating fetching. This job could, if new updates are found, trigger the agent to run on any new items.
-
 ## Check out the app (git codespace):
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jansengsy/regulatory-intelligence-agent)
 
-I setup the codespace myself as this project uses my Open Router API key and Langfuse for observability and I wanted to avoid you having to set these up and add credits. The `devcontainer.json` also sets up the dependencies and port forwarding to make your life easier.
+I setup the codespace myself as this project uses my Open Router API key and Langfuse for observability and I wanted to avoid you having to set these up and add credits.
 
 Feel free to use this as much as you like as you test, the costs are low and I've provisioned a unique API key for the project with restricted spending.
 
 The Codespace comes pre-loaded with regulatory data. Most alerts are already classified. I've left some recent updates out to allow you to see the fetching and analysis happen in real time.
+
+<details>
+<summary>Codespace instructions</summary>
+
+### How to run
 
 Once the Codespace is ready, open a terminal in the virtual vs code editor and run:
 
@@ -56,6 +53,8 @@ When ready, you will see this output:
 
 Click the `Local:` link to view the application.
 
+</details>
+
 ### What to try
 
 1. The dashboard loads with pre-classified GFSC alerts
@@ -66,7 +65,10 @@ Click the `Local:` link to view the application.
 
 ## Architecture
 
-Tree view was generate using the `tree` unix command. I've annotated key areas to highlight
+<details>
+<summary>File structure and architecture</summary>
+
+### I've annotated key areas to highlight:
 
 ```
 ├── Makefile
@@ -113,6 +115,8 @@ Tree view was generate using the `tree` unix command. I've annotated key areas t
 ├── regsense.db                          # Pre-populated SQLite database
 ├── requirements.txt
 ```
+
+</details>
 
 ## Tech Stack
 
