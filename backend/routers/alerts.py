@@ -62,7 +62,7 @@ def list_alerts(
     if analysed is not None:
         query = query.where(Alert.analysed == analysed)
 
-    query = query.order_by(col(Alert.id).desc()).offset(offset).limit(limit)
+    query = query.order_by(col(Alert.id).asc()).offset(offset).limit(limit)
     alerts = session.exec(query).all()
 
     return {"count": len(alerts), "alerts": alerts}
