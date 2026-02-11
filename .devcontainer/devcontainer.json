@@ -1,0 +1,46 @@
+{
+  "name": "RegSense",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+
+  "postCreateCommand": "pip install uv && uv sync && cd frontend && npm install",
+
+  "forwardPorts": [8000, 5173],
+  "portsAttributes": {
+    "8000": { "label": "Backend API", "onAutoForward": "silent" },
+    "5173": { "label": "Frontend", "onAutoForward": "openBrowser" }
+  },
+
+  "secrets": {
+    "OPENROUTER_API_KEY": {
+      "description": "API key for OpenRouter (required for LLM classification)"
+    },
+    "LANGFUSE_PUBLIC_KEY": {
+      "description": "Langfuse public key (optional — enables agent tracing)"
+    },
+    "LANGFUSE_SECRET_KEY": {
+      "description": "Langfuse secret key (optional — enables agent tracing)"
+    },
+    "LANGFUSE_BASE_URL": {
+      "description": "Langfuse endpoint URL (optional — defaults to https://cloud.langfuse.com)"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python"
+      }
+    }
+  }
+}
