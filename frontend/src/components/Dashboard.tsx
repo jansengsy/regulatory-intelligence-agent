@@ -6,6 +6,7 @@ import { StatsBar } from "./StatsBar";
 import { AlertsToolbar } from "./AlertsToolbar";
 import { AlertsList } from "./AlertsList";
 import { AlertDetail } from "./AlertDetail";
+import { LoaderCircleIcon } from "lucide-react";
 
 const SEVERITY_ORDER: Record<string, number> = {
   Critical: 0,
@@ -87,7 +88,9 @@ export function Dashboard() {
     try {
       const result = await triggerFetch();
       showToast(
-        `Fetched ${result.feeds_fetched} feeds — ${result.new_alerts} new alerts, ${result.duplicates_skipped} duplicates skipped`,
+        `Checked ${result.feeds_fetched} feeds:\n
+         New alerts: ${result.new_alerts}
+         Duplicates skipped: ${result.duplicates_skipped}`,
       );
       setLastFetched(new Date());
       await Promise.all([loadStats(), loadAlerts()]);
@@ -121,7 +124,7 @@ export function Dashboard() {
     sorted.sort((a, b) => {
       switch (sortKey) {
         case "published_date": {
-          // Newest first — parse the RSS date strings
+          // Newest first - parse the RSS date strings
           const da = new Date(a.published_date || 0).getTime();
           const db = new Date(b.published_date || 0).getTime();
           return db - da;
@@ -156,7 +159,7 @@ export function Dashboard() {
       {/* Toast */}
       {toastVisible && (
         <div
-          className={`fixed top-4 right-4 z-50 max-w-sm rounded border border-gray-300 bg-white px-4 py-3 shadow-md text-sm text-gray-800 ${
+          className={`fixed top-4 right-4 z-50 max-w-sm rounded border border-gray-300 bg-white px-4 py-3 shadow-md text-sm text-gray-800 whitespace-pre-line ${
             toastExiting ? "toast-exit" : "toast-enter"
           }`}
         >
@@ -170,17 +173,18 @@ export function Dashboard() {
           <h1 className="text-xl font-semibold text-gray-900">
             Regulatory Alerts
           </h1>
-          {lastFetched && (
-            <span className="text-xs text-gray-400">
-              Last updated{" "}
-              {lastFetched.toLocaleString("en-GB", {
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          )}
+
+          <span className="text-xs text-gray-400">
+            Last updated:{" "}
+            {lastFetched
+              ? lastFetched.toLocaleString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Never"}
+          </span>
         </div>
 
         {/* Stats */}
@@ -200,7 +204,19 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Scrollable content: list + detail — takes remaining height */}
+      {/* Activity banner */}
+      {(fetching || analysing) && (
+        <div className="shrink-0 flex items-center gap-3 rounded border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800/80">
+          <LoaderCircleIcon className="h-4 w-4 animate-spin text-blue-600/80" />
+          <span>
+            {fetching && "Fetching RSS feeds..."}
+            {analysing &&
+              `Classifying ${stats?.pending ?? ""} alerts via LLM agent. This may take a moment...`}
+          </span>
+        </div>
+      )}
+
+      {/* Scrollable content */}
       <div className="grid grid-cols-5 gap-4 flex-1 min-h-0">
         {/* Alerts list */}
         <div className="col-span-2 min-h-0">
