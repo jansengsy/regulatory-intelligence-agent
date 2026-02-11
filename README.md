@@ -160,11 +160,11 @@ The feed service defines each RSS source as a `FeedSource` dataclass with a URL,
 
 Super simple with no database server to setup. The migration path to PostgreSQL would be changing one connection string in `config.py` since SQLModel abstracts the engine.
 
-**Feed-based ingestion with deduplication**
+**Feed-based ingestion without duplication**
 
 RSS is lightweight and doesn't require API keys from regulators. The service uses the `link` to avoid duplication, so running fetch multiple times is safe. A production version could add web scraping, email parsing, or direct API integration. The ingestion logic could also be extracted into an agent tool, allowing multiple agents to trigger data collection, or exposed via an MCP server.
 
-**Observability as opt-in**
+**Observability**
 
 Langfuse tracing is configured in `agents/__init__.py`. Every LLM call is traced with full input/output, latency, and token usage, which can be used for debugging output quality and monitoring costs.
 
