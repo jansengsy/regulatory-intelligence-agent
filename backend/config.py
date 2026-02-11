@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_base_url: str = "https://cloud.langfuse.com"
     database_url: str = "sqlite:///./regsense.db"
-    app_title: str = "RegSense"
+    app_title: str = "Regulatory Intelligence"
     log_level: str = "INFO"
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
