@@ -15,7 +15,6 @@ const json = async <T>(res: Response): Promise<T> => {
     throw new Error(`API ${res.status}: ${body}`);
   }
   const result = await res.json();
-  console.log(result);
   return result as T;
 };
 
