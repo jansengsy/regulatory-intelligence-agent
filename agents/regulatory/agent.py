@@ -106,7 +106,7 @@ async def analyse_pending_alerts(
 
     pending = session.exec(
         select(Alert)
-        .where(Alert.analysed == False)  # noqa: E712
+        .where(Alert.analysed == False)
         .order_by(Alert.id)
         .limit(limit)
     ).all()

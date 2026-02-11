@@ -74,7 +74,7 @@ def alert_stats(session: Session = Depends(get_session)):
     """Aggregate counts for the dashboard: totals, by category, severity, etc"""
     total = session.exec(select(func.count(Alert.id))).one()
     analysed_count = session.exec(
-        select(func.count(Alert.id)).where(Alert.analysed == True)  # noqa: E712
+        select(func.count(Alert.id)).where(Alert.analysed == True)
     ).one()
     pending_count = total - analysed_count
 
