@@ -191,4 +191,4 @@ Langfuse tracing is configured in `agents/__init__.py`. Every LLM call is traced
 - **Sanctions cross-referencing:** Automatically check client data against newly published sanctions notices and notify relevant teams.
 - **Multi-jurisdiction support:** Add feeds from UK FCA, SEC, and other regulators to broaden coverage.
 - **Additional agents:** Expand the platform with more compliance/due diligence agents. KYC automation be a possible next step.
-- **Authentication and RBAC**
+- **Add authentication**
