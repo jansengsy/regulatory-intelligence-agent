@@ -16,21 +16,6 @@
     "5173": { "label": "Frontend", "onAutoForward": "openBrowser" }
   },
 
-  "secrets": {
-    "OPENROUTER_API_KEY": {
-      "description": "API key for OpenRouter (required for LLM classification)"
-    },
-    "LANGFUSE_PUBLIC_KEY": {
-      "description": "Langfuse public key (optional — enables agent tracing)"
-    },
-    "LANGFUSE_SECRET_KEY": {
-      "description": "Langfuse secret key (optional — enables agent tracing)"
-    },
-    "LANGFUSE_BASE_URL": {
-      "description": "Langfuse endpoint URL (optional — defaults to https://cloud.langfuse.com)"
-    }
-  },
-
   "customizations": {
     "vscode": {
       "extensions": [
