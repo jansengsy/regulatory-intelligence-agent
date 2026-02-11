@@ -123,10 +123,12 @@ async def analyse_pending_alerts(
 
     # Write results back to DB
     analysed_ids: list[int] = []
+    failed_ids: list[int] = []
 
     for alert, result in zip(pending, results):
         if isinstance(result, Exception):
             logger.error("Failed to analyse alert %d: %s", alert.id, result)
+            failed_ids.append(alert.id)
             continue
 
         classification = result
@@ -150,5 +152,5 @@ async def analyse_pending_alerts(
         )
 
     session.commit()
-    logger.info("Batch complete — %d/%d alerts analysed", len(analysed_ids), len(pending))
+    logger.info("Batch complete: %d/%d alerts analysed. %d failed.", len(analysed_ids), len(pending), len(failed_ids))
     return analysed_ids
