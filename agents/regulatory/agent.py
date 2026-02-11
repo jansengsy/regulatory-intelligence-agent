@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from pydantic import BaseModel, Field
@@ -115,38 +116,39 @@ async def analyse_pending_alerts(
         return []
 
     logger.info("Analysing %d pending alerts...", len(pending))
+
+    # Fire all LLM calls in parallel
+    tasks = [analyse_alert(alert) for alert in pending]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Write results back to DB
     analysed_ids: list[int] = []
 
-    for alert in pending:
-        try:
-            classification = await analyse_alert(alert)
+    for alert, result in zip(pending, results):
+        if isinstance(result, Exception):
+            logger.error("Failed to analyse alert %d: %s", alert.id, result)
+            continue
 
-            # Map the structured output back onto the Alert row
-            alert.summary = classification.summary
-            alert.category = classification.category
-            alert.subcategories = classification.subcategories
-            alert.severity = classification.severity
-            alert.affected_sectors = classification.affected_sectors
-            alert.action_items = classification.action_items
-            alert.effective_date = classification.effective_date
-            alert.key_entities = classification.key_entities
-            alert.analysed = True
+        classification = result
+        alert.summary = classification.summary
+        alert.category = classification.category
+        alert.subcategories = classification.subcategories
+        alert.severity = classification.severity
+        alert.affected_sectors = classification.affected_sectors
+        alert.action_items = classification.action_items
+        alert.effective_date = classification.effective_date
+        alert.key_entities = classification.key_entities
+        alert.analysed = True
 
-            session.add(alert)
-            session.commit()
-            session.refresh(alert)
+        session.add(alert)
+        analysed_ids.append(alert.id)
+        logger.info(
+            "Alert %d classified: %s / %s",
+            alert.id,
+            classification.category,
+            classification.severity,
+        )
 
-            analysed_ids.append(alert.id)
-            logger.info(
-                "Alert %d classified: %s / %s",
-                alert.id,
-                classification.category,
-                classification.severity,
-            )
-
-        except Exception as exc:
-            logger.error("Failed to analyse alert %d: %s", alert.id, exc)
-            session.rollback()
-
-    logger.info("Batch complete - %d/%d alerts analysed", len(analysed_ids), len(pending))
+    session.commit()
+    logger.info("Batch complete — %d/%d alerts analysed", len(analysed_ids), len(pending))
     return analysed_ids
