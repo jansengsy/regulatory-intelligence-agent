@@ -114,32 +114,6 @@ Tree view was generate using the `tree` unix command. I've annotated key areas t
 ├── requirements.txt
 ```
 
-## Key Design Decisions
-
-**Multi-agent architecture**
-
-The regulatory classification agent is isolated in its own package (`agents/regulatory/`) with separate files for the agent definition, system prompt, and tools. This makes it straightforward to add additional agents (e.g., portfolio impact, document analysis) without touching the existing code
-
-**Structured LLM output**
-
-The agent uses Pydantic AI's `output_type` parameter with an `AlertClassification` model. This forces the LLM to respond in a validated JSON schema rather than free text, giving us typed, reliable classification results
-
-**GFSC-first, jurisdiction-extensible**
-
-The feed service defines each RSS source as a `FeedSource` dataclass with a URL, category, and jurisdiction. Adding another regulator (e.g., UK FCA) would mean appending to a list, so no structural changes needed
-
-**SQLite for the POC**
-
-Zero-config, file-based, perfect for Codespace deployment. The migration path to PostgreSQL would be changing one connection string in `config.py`
-
-**Feed-based ingestion**
-
-RSS is lightweight and doesn't require API keys from regulators. A production version could add web scraping, email parsing, or direct API integration. This could also be converted to a agent tool/skill to be used by multiple agents (could be added to top level agent package or accessed via an MCP server)
-
-**Observability**
-
-Langfuse tracing is configured in `agents/__init__.py` and fails gracefully if credentials aren't set. This means the app works identically with or without observability. This is applied to all agents.
-
 ## Tech Stack
 
 | Layer         | Technology                                       |
@@ -150,34 +124,68 @@ Langfuse tracing is configured in `agents/__init__.py` and fails gracefully if c
 | Observability | Langfuse                                         |
 | RSS Ingestion | feedparser                                       |
 
-I chose this stack and all tools are open source and lightweight.
+The stack is lightweight and mostly open source.
 
-- I chose to use Pydantic AI because its a type-safe agent framework that fits well with FastAPI/Pydantic. The structured outputs it allows me to define map to my sql models, so agent results flow straight into the db without manual parsing.
-- Open Router is nice because it let's me swap between models easily and can be used to automatically select the most practical model for the task.
-- Frontend was built using tools I am familiar with using Shadcn to save me building out components myself for this demo
+### Key Design/tech Decisions
+
+**Multi-agent architecture**
+
+The regulatory classification agent is isolated in its own package (`agents/regulatory/`) with separate files for the agent definition, system prompt, and tools. This makes it straightforward to add additional agents (e.g., portfolio impact, document analysis) without touching the existing code. I chose this structure over a single monolithic agent because each domain (regulatory, portfolio, documents) would need different prompts, tools, and output schemas. By keeping them separate they can evolve independantly while still making use of global tools/setup like the observability.
+
+**Structured LLM output over free-text parsing**
+
+The agent uses Pydantic AI's `output_type` parameter with an `AlertClassification` Pydantic model. This forces the LLM to respond in a validated JSON schema rather than free text. The trade-off is that structured output uses tool calling under the hood, which limits model choice (some models don't support it), but the benefit is that classification results are typed, validated, and map directly to the SQLModel database schema without any manual parsing or post-processing. If the LLM returns invalid data, Pydantic catches it before it hits the database.
+
+**Pydantic AI over LangChain/CrewAI**
+
+I chose Pydantic AI because it's lightweight, type-safe, and integrates naturally with the FastAPI/Pydantic ecosystem. LangChain would have added abstraction overhead for what is fundamentally a single-step classification task. In its current form, this agent doesn't need chains, memory, or complex orchestration. Pydantic AI's `Agent` with `output_type` gave me exactly what I needed with minimal boilerplate.
+
+**Concurrent classification with asyncio.gather**
+
+Each alert classification is independent, one doesn't depend on another. The agent uses `asyncio.gather` to run all LLM calls in parallel rather than sequentially. This means a batch of 10 alerts finishes in roughly the time of a single call instead of 10× that. Failed classifications are caught via `return_exceptions=True`, logged, and skipped without aborting the whole batch. For larger production workloads, a task queue would add persistence and retries, but for this POC, `asyncio.gather` gives a big speedup with minimal code.
+
+**OpenRouter as the LLM gateway**
+
+Rather than calling Anthropic's API directly, I used OpenRouter as an intermediary. This means the model can be swapped by changing a single environment variable (e.g., from Claude Haiku to GPT-4o or a local model) without any code changes. For a production tool, this also provides model fallback options and usage analytics. The trade-off is an additional network hop, but I think the flexibility outweighs the (low) latency cost.
+
+**GFSC currently, with potential to expand into other jurisdictions**
+
+The feed service defines each RSS source as a `FeedSource` dataclass with a URL, category, and jurisdiction. Adding another regulator (e.g., UK FCA) would mean appending to a list, so no structural changes needed. I focused on GFSC specifically because it's the primary regulator for Guernsey-based firms and provides well-structured RSS feeds across 13 categories. The `FeedSource` data class includes a jurisdiction field (defaulting to Guernsey) which I added to have early support for this potential expansion.
+
+**SQLite for the POC**
+
+Zero-config, file-based, and no database server to provision. The trade-off is no concurrent write support, but for a single-user POC this isn't a concern. The migration path to PostgreSQL would be changing one connection string in `config.py` since SQLModel abstracts the engine.
+
+**Feed-based ingestion with deduplication**
+
+RSS is lightweight and doesn't require API keys from regulators. The service deduplicates against existing `link` values in the database, so running fetch multiple times is safe. A production version could add web scraping, email parsing, or direct API integration. The ingestion logic could also be extracted into an agent tool, allowing multiple agents to trigger data collection, or exposed via an MCP server for broader integration.
+
+**Observability as opt-in**
+
+Langfuse tracing is configured in `agents/__init__.py` and fails gracefully if credentials aren't set. This means the app works identically with or without observability. No crashes and no conditional logic scattered through the codebase. When enabled, every LLM call is traced with full input/output, latency, and token usage, which is valuable for debugging classification quality and monitoring costs.
 
 ## How I would expand/improve this tool
 
-If progressing this build, the initial improvements I would make would be:
+### Immediate improvements
 
-- Add scheduling to the ingestion and analysis pipeline so users don't need to manually update data
-- Adding retry logic to fetching and queues for analysis (which is currently slow when doing lots of alerts)
-- Add alerting for any critical alerts to avoid things being missed/manual checking
-- Flesh out the agent with tools to query company knowledge or external sources if needed for classification
-- Host properly and implement real DB like postgres (possibly using pgvector to allow users to search for alerts but probably a bit overkill for what this currently is)
-- The ability to mark alerts as 'actioned/complete' to keep the feed clean
-- Alert pagination
-- Additional prompts/information about HFL so the agent can better determine how to categorise and choose severity
+- **Scheduled ingestion:** Replace manual "Fetch Feeds" with a background scheduler polling RSS feeds on a configurable interval, automatically triggering classification for new items.
+- **Retry logic and error handling:** Add retry with exponential backoff for both RSS fetching (network failures) and LLM calls (rate limits, timeouts). Failed classifications should be queued for retry rather than silently skipped.
+- **Output validation with [Guardrails AI](https://github.com/guardrails-ai/guardrails):** Add a validation layer on top of LLM classifications to catch hallucinated categories, invalid severity levels, or inconsistent sector assignments before they reach the database.
+- **Domain-specific context:** Provide the agent with additional context about the organisation (e.g., which sectors they operate in, current compliance priorities) so it can better determine relevance and severity.
+- **Critical alert notifications:** Automatically flag and surface high-severity alerts to avoid reliance on manual checking.
+- **Workflow state:** Allow users to mark alerts as "actioned" or "dismissed" to keep the active feed clean.
+- **Pagination:** Server-side pagination for the alerts list to handle larger datasets efficiently.
+- **PostgreSQL migration:** Swap SQLite for PostgreSQL for production deployment with concurrent access. Could add pgvector for semantic search across alert summaries if the dataset grows large enough to warrant it.
 
-For feature expansion, we could
+### Feature expansion
 
-- Digest/summary emails, weekly, summarising changes in regulation/sanctions
-- Audit trails (LLM trace for how classifications were made, which model was used, cost)
-- Pluggable ingestion architecture. Allowing more sources beyond RSS feeds (email lists, PDFs, gazette notes)
-- Cross-reference regulatory alerts against a portfolio of holdings (also referencing live market data) to show which holdings are affected by new regulations and estimate portfolio impact
-- Timeline/calendar view to track upcoming deadlines/implementation dates
-- Allow users to upload compliance documentation/build a new agent to check company compliance data and flag sections that may need updating based on changes
-- Referencing company data, email anyone relevant if a client appears on sanctions list
-- Add support for more jurisdictions for broader checking/application
-- Authentication and RBAC by hooking into your Entra tenant
-- Add more compliance/due diligence agents to allow for a more comprehensive platform (Know your client might be a good place to start)
+- **Document intelligence:** Build a new agent to process uploaded compliance documents (PDFs, policies). [Docling](https://github.com/docling-project/docling) looks promising for structured document extraction, and could feed into an agent that cross-references document content against recent regulatory changes to flag sections needing updates.
+- **Portfolio impact analysis:** Cross-reference regulatory alerts against a portfolio of holdings using live market data (yfinance) to estimate which holdings are affected and quantify exposure.
+- **Digest emails:** Weekly summaries of regulatory changes delivered by email, so stakeholders who don't use the dashboard still stay informed.
+- **Pluggable ingestion:** Extend beyond RSS to support email lists, PDF gazette notices, and direct API integrations. The ingestion logic could be exposed as an MCP server, allowing other tools and agents to trigger data collection.
+- **Audit trails:** Full traceability for every classification: which model was used, the complete input/output, token usage, cost, and confidence. Langfuse already captures this.
+- **Timeline/calendar view:** Track upcoming effective dates and implementation deadlines from classified alerts.
+- **Sanctions cross-referencing:** Automatically check client data against newly published sanctions notices and notify relevant teams.
+- **Multi-jurisdiction support:** Add feeds from UK FCA, SEC, and other regulators to broaden coverage.
+- **Authentication and RBAC:** Hook into an existing identity provider (e.g., Entra ID) for role-based access control.
+- **Additional agents:** Expand the platform with more compliance/due diligence agents. KYC automation would be a natural next step.
